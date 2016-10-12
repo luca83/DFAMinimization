@@ -40,6 +40,19 @@ var DFA = function(transition, final, start) {
   this.start = start
 };
 
+DFA.prototype.states = function (){
+			var states = new Set();
+      for (var key in this.transition) {
+      if (this.transition.hasOwnProperty(key)) {
+       if (!states.has(key))
+					{
+						states.add(parseInt(key));
+				}
+      }
+		}
+		return states;
+		};
+    
 DFA.prototype.alphabet = function (){
 			var alphabet = new Set();
       
@@ -52,11 +65,10 @@ DFA.prototype.alphabet = function (){
 						alphabet.add(symbol);
 					}
 				}
-			 
       }
 		}
-			return alphabet;
-		};
+		return alphabet;
+};
 DFA.prototype.test = function (string) {
 			var state = this.start,
 			index = 0;
@@ -102,13 +114,27 @@ DFA.prototype.unreachable = function(dfa){
       });
     });
     new_states = temp.difference(reachable_states);
-    reachable_states.union(new_states);
+    reachable_states = reachable_states.union(new_states);
   }while(new_states.size != 0);
- 
+  var unreachable_states = dfa.states().difference(reachable_states);
+  return unreachable_states;
 }
 
 
-var dfa = new DFA({1: {"a":1,"b":2}, 2:{"a":1,"b":2}}, [1], 1);
+var dfa = new DFA({1: {"a":1,"b":2}, 2:{"a":1,"b":2},3:{"a":1,"b":2}}, [1], 1);
 //console.log(dfa.alphabet());
 //console.log(dfa.test("abbba"));
-//dfa.unreachable(dfa);
+console.log(dfa.unreachable(dfa));
+
+/**
+TEST operation
+var setA = new Set([1,2,3,4]),
+    setB = new Set([2,3]),
+    setC = new Set([3,4,5,6]);
+
+setA.isSuperset(setB); // => true
+setA.union(setC); // => Set [1, 2, 3, 4, 5, 6]
+setA.intersection(setC); // => Set [3, 4]
+setA.difference(setC); // => Set [1, 2]
+console.log(setA);
+**/
