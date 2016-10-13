@@ -1,4 +1,10 @@
 
+Set.prototype.equals = function(setB){
+    if (this.size !== setB.size) return false;
+    for (var a of this) if (!setB.has(a)) return false;
+    return true;
+}
+
 Set.prototype.isSuperset = function (subset) {
     for (var elem of subset) {
         if (!this.has(elem)) {
@@ -213,16 +219,19 @@ DFA.prototype.minimize = function () {
               
               console.log("///// diff");
               console.log(diff);
-              if ( intersect.size > 0 && diff.size >0)
+              if (intersect.size > 0 && diff.size >0)
 							{
+                //replace Y in P by the two sets X ∩ Y and Y \ X
 								P.splice(k,1, intersect, diff); 
 								
 								// Search if Y is in W
 								var found = false;
 								for (var kk = 0;kk < W.length ; kk++)
 								{
-									if (set.equals(W[kk], Y))
+                	//if Y is in W
+									if (W[kk].equals(Y))
 									{
+                  	//replace Y in W by the same two sets
 										W.splice(kk,1, intersect, diff);
 										found = true;
 										break;
@@ -231,12 +240,15 @@ DFA.prototype.minimize = function () {
 								
 								if (!found)
 								{
-									if (set.count(intersect) <= set.count(diff))
+                  // if |X ∩ Y| <= |Y \ X|
+									if (intersect.size <= diff.size)
 									{
+                  	// add X ∩ Y to W
 										W.push(intersect);
 									}
 									else
 									{
+                    //  add Y \ X to W
 										W.push(diff);
 									}
 								}
@@ -245,20 +257,68 @@ DFA.prototype.minimize = function () {
           }
         }
       }
+      console.log("--------------- p -------------");
+      console.log(P);
+      //rebuild dfa
+      P.sort(function (a , b) {  return parseInt(Object.keys(a)[0]) -  parseInt(Object.keys(b)[0]) });
+      
+			var newTransitions = [];
+			var newFinals = [];
+      console.log("--------------- p sorted-------------");
+      console.log(P);
+			for (var i = 0; i < P.length; i++)
+			{
+    
+        
+				var stateinP = P[i].keys().next().value;
+				var newTrans = {};
+        var stateTrans = {};
+        var s = 0;
+        
+				for (var symbol in this.transition[stateinP])
+				{
+					var oldState = this.transition[stateinP][symbol];
+					for (var j = 0; j < P.length; j++)
+					{
+						if (P[j].has(oldState))
+						{
+							newTrans[symbol] = j;
+							break;
+						}
+					}
+         
+				}
+        
+				newTransitions.push(newTrans);
+				
+				if (this.final.indexOf(parseInt(stateinP)) > -1)
+				{
+					newFinals.push(i);
+				}
+			}
+      console.log("new transitionoooonnnn");
+      console.log(newTransitions);
+      
+      
+      console.log("new finalessssssss");
+      console.log(newFinals)
+
 }
 
-var dfa = new DFA({1: {"a": 1, "b": 2}, 2: {"a": 1, "b": 2}}, [1], 1);
+var dfa = new DFA({1: {"a": 1, "b": 2}, 2: {"a": 1, "b": 3}, 3: {"a": 1,"b" :2}}, [1], 1);
 //console.log(dfa.alphabet());
 //console.log(dfa.test("abbba"));
 console.log(dfa.unreachable());
 dfa.minimize();
 
-/**
- TEST operation
- var setA = new Set([1,2,3,4]),
- setB = new Set([2,3]),
+
+ //TEST operation
+  /**var setA = new Set([1,2,3,4]),
+ setB = new Set([2,3,1,4]),
  setC = new Set([3,4,5,6]);
- setA.isSuperset(setB); // => true
+ 
+ console.log(setB.equals(setA));
+setA.isSuperset(setB); // => true
  setA.union(setC); // => Set [1, 2, 3, 4, 5, 6]
  setA.intersection(setC); // => Set [3, 4]
  setA.difference(setC); // => Set [1, 2]
