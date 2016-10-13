@@ -1,3 +1,4 @@
+
 Set.prototype.isSuperset = function (subset) {
     for (var elem of subset) {
         if (!this.has(elem)) {
@@ -146,20 +147,117 @@ DFA.prototype.unreachable = function () {
  */
 
 DFA.prototype.minimize = function () {
-    // TODO 
+      var states = new Set();
+			var i=0;
+			for (var state in this.transition)
+			{
+				states.add(parseInt(state));
+			}
+      console.log(states);
+			
+			var FinalSet = new Set();
+			for (var i = 0;i < this.final.length ;i++)
+			{
+				FinalSet = FinalSet.add(parseInt(this.final[i]));
+			}
+			console.log(FinalSet);
+			// Find alphabet
+			var alphabet = this.alphabet();
+      var transition = this.transition;
+     
+      console.log("Alphabet")
+      console.log(alphabet);
+
+			/// Hopcroft
+			var P = new Array(states.difference(FinalSet) , FinalSet);
+			var W = new Array(FinalSet);
+      console.log("/////// P");
+      console.log(P);
+      console.log("/////// W");
+      console.log(W);
+			
+			while(W.length > 0)
+			{
+        // choose and remove a set A from W
+      	var A = W.pop();
+        
+      	// for each c in Σ do
+        for (let c of alphabet.values()){
+          
+          // let X be the set of states for which a transition on c leads to a state in A
+          var X = new Set();
+          for (var k in this.transition)
+          {
+              var check = this.transition[k][c];
+              if (A.has(check ))
+              {
+              	X = X.add(parseInt(k));
+              }
+          }
+          console.log("////// X ");
+          console.log(X);
+          if (X.size > 0)
+					{
+          	// X FOUND
+            //for each set Y in P for which X ∩ Y is nonempty and Y \ X is nonempty do
+          	for (var k = 0;k < P.length; k++)
+						{
+            	var Y = P[k];
+							var intersect = X.intersection(Y);
+							var diff = Y.difference(X);
+              console.log("///// Y");
+              console.log(Y);
+              
+              console.log("///// intersect");
+              console.log(intersect);
+              
+              console.log("///// diff");
+              console.log(diff);
+              if ( intersect.size > 0 && diff.size >0)
+							{
+								P.splice(k,1, intersect, diff); 
+								
+								// Search if Y is in W
+								var found = false;
+								for (var kk = 0;kk < W.length ; kk++)
+								{
+									if (set.equals(W[kk], Y))
+									{
+										W.splice(kk,1, intersect, diff);
+										found = true;
+										break;
+									}
+								}
+								
+								if (!found)
+								{
+									if (set.count(intersect) <= set.count(diff))
+									{
+										W.push(intersect);
+									}
+									else
+									{
+										W.push(diff);
+									}
+								}
+							}
+          	}
+          }
+        }
+      }
 }
 
-var dfa = new DFA({1: {"a": 1, "b": 2}, 2: {"a": 1, "b": 2}, 3: {"a": 1, "b": 2}}, [1], 1);
+var dfa = new DFA({1: {"a": 1, "b": 2}, 2: {"a": 1, "b": 2}}, [1], 1);
 //console.log(dfa.alphabet());
 //console.log(dfa.test("abbba"));
 console.log(dfa.unreachable());
+dfa.minimize();
 
 /**
  TEST operation
  var setA = new Set([1,2,3,4]),
  setB = new Set([2,3]),
  setC = new Set([3,4,5,6]);
-
  setA.isSuperset(setB); // => true
  setA.union(setC); // => Set [1, 2, 3, 4, 5, 6]
  setA.intersection(setC); // => Set [3, 4]
